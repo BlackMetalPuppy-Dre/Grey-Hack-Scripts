@@ -1,12 +1,12 @@
 # Grey-Hack-Scripts
 Scripts for the game Grey Hack
 
-mapkit (vulnerability scanner that saves the vulnerabilities to a txt file in the map /targets it asks if you want to attack the target, mapkit can be used as standalone)
+mapkit: vulnerability scanner that saves the vulnerabilities to a txt file in the map /targets/lib(service_versoin) it asks if you want to attack the target, mapkit can be used as standalone
 
-daemonmail (scans mail, que's IP addresses launches mapkit and harvests banks from target with file vulnerabilities, not a standalone needs mapkit to work)
+daemonmail: scans mail, que's IP addresses launches mapkit and harvests banks from target with file vulnerabilities, not a standalone needs mapkit to work. bank harvest does not work yet!
 
-Vector Brute Force Password cracker! if a Admin is blocking higher privileges you can drop this in the guest map of your target and run it wait and you get the password 
-Passwords list updated (large)
+Vector: Brute force password if a Admin is blocking higher privileges you can drop vector and vecpass.txt in the guest map of your target and run it wait and you get the password about 30 sec and drops you in the root shell.
+Passwords list updated with 14725 passwords
 
 
 Credits vector TO JWFRAUSTRO 
