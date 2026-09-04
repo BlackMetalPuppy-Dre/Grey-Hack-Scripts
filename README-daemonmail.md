@@ -1,3 +1,5 @@
+Mail Automation Daemon
+
 Main Control Flow:
 command-line options such as --once, --auto, --interval(removed), and --old-pid. --once(removed) i never use (more debug then function is removed) i always run with --auto (will check terminal PID saves it for after mail scan) 
 --interval and --once are removed, and --old-pid is for the auto flag so it can kill the old terminal (because gray hack mail is weird the terminal does not see new mails) thats why the PID kill
