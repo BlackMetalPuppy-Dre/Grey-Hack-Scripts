@@ -1,17 +1,16 @@
-DO NOT USE BROKEN!!!! LEXER ERROR CAN'T SEEM TO FIX IT!
-
-// Command mapkit v3.0
-//print("Booting Mapkit V3.0...")
-//wait(0.2)
-//print("Gathering necessary File's and Lib's please wait!")
-//wait(0.2)
-//print("Starting Mapkit V3.0")
-//wait(0.2)
-//print("Loading complete!")
-//wait(0.2)
-//print("Starting...")
-//wait(0.2)
-//when you want the startup thing (remove the // infront of print and wait)
+// Command mapkit [Target IP]
+//Works great with daemonmail
+//Can be used as standalone
+print("Booting Mapkit V3.0...")
+wait(0.2)
+print("Gathering necessary File's and Lib's please wait!")
+wait(0.2)
+print("Starting Mapkit V3.0")
+wait(0.2)
+print("Loading complete!")
+wait(0.2)
+print("Starting...")
+wait(0.2)
 if params.len != 1 or params[0] == "-h" or params[0] == "--help" then exit ("<b>Usage: "+program_path.split("/")[-1]+" [ip_address]</b>")
 
 metax = include_lib("/lib/metaxploit.so")
@@ -60,7 +59,7 @@ end if
 discoveredServices = []  // each entry: {"name": libName, "version": libVersion, "port": portNumber}
 
 // ================================================================
-//  SMART HARVEST (Uses exploits from /targets/<router_ip>/)
+//  SMART EXPLOIT COLLECTION (Uses exploits from /targets/<router_ip>/)
 // ================================================================
 
 // --- Helper: get router exploits for a specific version (only Computer/File) ---
@@ -72,11 +71,11 @@ get_router_exploits = function(routerIP, targetsFolder, targetVersion)
         print("  No kernel_router.so_v" + targetVersion + " folder found.")
         return exploits
     end if
-    
+
     if not libDir.is_folder then
         return exploits
     end if
-    
+
     for f in libDir.get_files
         content = f.get_content
         if content == null then continue
@@ -114,11 +113,11 @@ get_service_exploits = function(targetsFolder, targetLibName, targetVersion)
         print("  No " + libFolderName + " folder found.")
         return serviceExploits
     end if
-    
+
     if not libDir.is_folder then
         return serviceExploits
     end if
-    
+
     for f in libDir.get_files
         content = f.get_content
         if content == null then continue
@@ -169,7 +168,7 @@ try_exploits_for_file = function(routerLib, lanIP, exploits)
     return null
 end function
 
-// --- Helper: try service exploits to get a computer or file object ---
+// --- Helper: try service exploits to get a computer or File object ---
 try_service_exploits = function(lanIP, serviceExploits)
     for exp in serviceExploits
         print("    Trying service exploit: " + exp.lib + " port " + exp.port + " " + exp.zone + "/" + exp.exploit)
@@ -190,96 +189,31 @@ try_service_exploits = function(lanIP, serviceExploits)
     return null
 end function
 
-// --- Helper: Get privilege level from a shell (maps to root/user/guest) ---
-get_shell_user = function(shell)
-    if shell == null then return "unknown"
-    
-    username = null
-    
-    // First try direct properties
-    if shell.hasIndex("user") and typeof(shell.user) == "string" then
-        username = shell.user
-    else if shell.hasIndex("username") and typeof(shell.username) == "string" then
-        username = shell.username
-    else if shell.hasIndex("get_user") then
-        u = shell.get_user()
-        if u != null and typeof(u) == "string" then username = u
-    end if
-    
-    if username != null then
-        uname_lower = username.lower
-        if uname_lower == "root" then return "root"
-        if uname_lower == "guest" then return "guest"
-        return "user"
-    end if
-    
-    // Try whoami via shell.launch
-    temp_file = "/tmp/whoami_temp.txt"
-    shell.launch("/bin/whoami", "> " + temp_file)
-    wait(1)
-    host = get_shell.host_computer
-    if host.File(temp_file) != null then
-        content = host.File(temp_file).get_content
-        if content != null then
-            content = content.trim
-            host.File(temp_file).delete
-            if content != "" then
-                uname_lower = content.lower
-                if uname_lower == "root" then return "root"
-                if uname_lower == "guest" then return "guest"
-                return "user"
-            end if
-        end if
-    end if
-    
-    // Try host_computer.user
-    if shell.hasIndex("host_computer") then
-        host = shell.host_computer
-        if host != null and host.hasIndex("user") then
-            u = host.user
-            if u != null and typeof(u) == "string" then
-                uname_lower = u.lower
-                if uname_lower == "root" then return "root"
-                if uname_lower == "guest" then return "guest"
-                return "user"
-            end if
-        end if
-    end if
-    
-    return "unknown"
-end function
+// --- Helper: prompt user for privilege level after shell exploit ---
+getPrivilegeOfShell = function(shellObj)
+    print("")
+    print("  Grey Hack printed privilege above.")
+    print("  Enter privilege level:")
+    print("  1) root")
+    print("  2) guest")
+    print("  3) user")
+    print("  4) custom (enter username)")
 
-// --- Helper: Process passwd file (decrypt hashes) ---
-process_passwd_file = function(fileObj)
-    if fileObj == null then return
-    content = null
-    if fileObj.hasIndex("get_content") then
-        content = fileObj.get_content
-    else if fileObj.hasIndex("content") then
-        content = fileObj.content
-    end if
-    if content == null then return
-    
-    print("  [Passwd] Decrypting entries:")
-    lines = content.split("\n")
-    for line in lines
-        line = line.trim
-        if line == "" then continue
-        parts = line.split(":")
-        if parts.len >= 2 then
-            username = parts[0]
-            hash = parts[1]
-            decrypted = null
-            if cryptools != null then
-                decrypted = cryptools.decipher(hash)
-            end if
-            if decrypted != null then
-                print("    " + username + ":" + hash + " -> " + decrypted)
-            else
-                print("    " + username + ":" + hash + " (decryption failed)")
-            end if
+    validChoice = false
+    while not validChoice
+        choice = user_input("  Choice (1-4 or custom username): ").trim.lower
+        if choice == "1" or choice == "root" then
+            return "root"
+        else if choice == "2" or choice == "guest" then
+            return "guest"
+        else if choice == "3" or choice == "user" then
+            return "user"
+        else if choice != "" then
+            return choice.lower
         end if
-    end for
+        print("  Invalid choice, try again.")
+    end while
+    return "unknown"
 end function
 
 // ================================================================
@@ -316,7 +250,7 @@ sql_scanned = false
 smtp_scanned = false
 
 // ================================================================
-// --- ROUTER SCAN ---
+// --- GENERAL SCAN ---
 // ================================================================
 
 print("\n--- Scanning Router ---")
@@ -365,23 +299,21 @@ if routerVersion then
                     labelStart = xp.indexOf("<b>")
                     labelEnd = xp.indexOf("</b>")
                     exploit = xp[labelStart + 3: labelEnd]
-                    print("\nTesting router exploit: " + exploit)
+                    print("\nTesting exploit: " + exploit)
                     wait(0.5)
                     result = routerLib.overflow(zone, exploit, password)
                     if result == null then
                         status = "Undefined / Conditional"
                     else if typeof(result) == "shell" then
-                        user = get_shell_user(result)
-                        status = "Shell (" + user + ")"
+                        privilege = getPrivilegeOfShell(result)
+                        print("  Scanning: Shell exploit successful")
+                        status = "Shell/" + privilege
                         shellExploits.push(exploit)
                     else if typeof(result) == "firewall" then
                         status = "Firewall"
                         print("Firewall rule obtained!")
                     else if typeof(result) == "file" then
                         status = "File"
-                        if result.path.indexOf("passwd") != -1 or result.path.indexOf("shadow") != -1 then
-                            process_passwd_file(result)
-                        end if
                     else if typeof(result) == "folder" then
                         status = "Folder"
                     else if typeof(result) == "number" then
@@ -505,14 +437,12 @@ else
                 if result == null then
                     status = "Undefined / Conditional"
                 else if typeof(result) == "shell" then
-                    user = get_shell_user(result)
-                    status = "Shell (" + user + ")"
+                    privilege = getPrivilegeOfShell(result)
+                    print("  Scanning: Shell exploit successful")
+                    status = "Shell/" + privilege
                     shellExploits.push(exploit)
                 else if typeof(result) == "file" then
                     status = "File"
-                    if result.path.indexOf("passwd") != -1 or result.path.indexOf("shadow") != -1 then
-                        process_passwd_file(result)
-                    end if
                 else if typeof(result) == "number" then
                     status = "Password: '" + password + "'"
                 else if typeof(result) == "computer" then
@@ -621,59 +551,52 @@ else
     print(format_columns(openInfo))
 end if
 
-// --- Filtered Shell Exploits Summary (only target's services) ---
 print("\n--- Shell Exploits Found (filtered to target's services) ---")
 shellCount = 0
 targetFolderObj = computer.File(targetsFolder)
 
 targetLibNames = []
-if discoveredServices != null and discoveredServices.len > 0 then
-    for svc in discoveredServices
-        targetLibNames.push(svc.name + "_v" + svc.version)
-        targetLibNames.push(svc.name + "_" + svc.version)
-    end for
-end if
-
+for s in discoveredServices
+    targetLibNames.push(s.name + "_v" + s.version)
+    targetLibNames.push(s.name + "_" + s.version)
+end for
 if routerVersion != null then
     targetLibNames.push("kernel_router.so_v" + routerVersion)
 end if
 
-if targetLibNames.len == 0 then
-    print("  No target services discovered.")
-else
-    if targetFolderObj != null and targetFolderObj.is_folder then
-        for libDir in targetFolderObj.get_folders
-            libMatchesTarget = false
-            for targetName in targetLibNames
-                if libDir.name == targetName then
-                    libMatchesTarget = true
-                    break
-                end if
-            end for
-            if not libMatchesTarget then
-                continue
-            end if
-            
-            files = libDir.get_files
-            if files != null and typeof(files) == "list" then
-                for f in files
-                    content = f.get_content
-                    if content == null then continue
-                    isShell = false
-                    for line in content.split(char(10))
-                        if line.indexOf("Result: Shell") == 0 then
-                            isShell = true
-                            break
-                        end if
-                    end for
-                    if isShell then
-                        shellCount = shellCount + 1
-                        print("[Shell] " + libDir.name + " / " + f.name)
-                    end if
-                end for
+if targetFolderObj != null and targetFolderObj.is_folder then
+    for libDir in targetFolderObj.get_folders
+        libMatchesTarget = false
+        for targetName in targetLibNames
+            if libDir.name == targetName then
+                libMatchesTarget = true
+                break
             end if
         end for
-    end if
+        if not libMatchesTarget then
+            continue
+        end if
+
+        files = libDir.get_files
+        if files != null and typeof(files) == "list" then
+            for f in files
+                content = f.get_content
+                if content == null then continue
+                isShell = false
+                for line in content.split(char(10))
+                    if line.indexOf("Result: ") == 0 and line.indexOf("Shell") != null then
+                        isShell = true
+                        resultLine = line
+                        break
+                    end if
+                end for
+                if isShell then
+                    shellCount = shellCount + 1
+                    print("[Shell] " + libDir.name + " / " + f.name + " (" + resultLine[8:] + ")")
+                end if
+            end for
+        end if
+    end for
 end if
 
 if shellCount == 0 then
@@ -685,7 +608,7 @@ end if
 print("========================================")
 
 // ================================================================
-// --- ATTACK PHASE (with port override and result display) ---
+// --- ATTACK PHASE (exploit picker with privilege info) ---
 // ================================================================
 
 attackChoice = user_input("Launch attack? (y/n): ")
@@ -711,16 +634,16 @@ end if
 // --- Build list of target library names ---
 targetLibNames = []
 if discoveredServices != null and discoveredServices.len > 0 then
-    for svc in discoveredServices
-        targetLibNames.push(svc.name + "_v" + svc.version)
-        targetLibNames.push(svc.name + "_" + svc.version)
+    for s in discoveredServices
+        targetLibNames.push(s.name + "_v" + s.version)
+        targetLibNames.push(s.name + "_" + s.version)
     end for
 end if
 if routerVersion != null then
     targetLibNames.push("kernel_router.so_v" + routerVersion)
 end if
 
-// --- Iterate over all folders and add those that match targetLibNames ---
+// --- Iterate over all folders and select those that match targetLibNames ---
 libFolders = []
 libFolderNames = []
 folderList = targetsFolderObj.get_folders
@@ -737,7 +660,7 @@ if folderList != null and typeof(folderList) == "list" then
             if matched then
                 libFolders.push(f)
                 libFolderNames.push(f.name)
-                print("[*] Added: " + f.name)
+                print("[+] Added: " + f.name)
             end if
         end if
     end for
@@ -745,7 +668,7 @@ end if
 
 if libFolders.len == 0 then
     print("<b>Warning: No matching libraries found for target's services.</b>")
-    print("[*] Falling back to showing all available libraries.")
+    print("[Fallback] Showing all available libraries.")
     for f in folderList
         if f.is_folder then
             libFolders.push(f)
@@ -768,7 +691,6 @@ while true
         i = i + 1
     end for
     print("[s] SSH direct login")
-    print("[h] Harvest LAN (skips Guest)")
     print("[q] Quit")
     libChoice = user_input("Pick a library or command: ")
     if libChoice == "" then continue
@@ -777,7 +699,7 @@ while true
     if libChoice == "s" then
         sshUser = user_input("SSH username: ")
         sshPass = user_input("SSH password: ")
-        sshPort = user_input("SSH port (leave blank for 22): ")
+        sshPort = user_input("SSH port (blank = 22): ")
         if sshPort == "" then sshPort = "22"
         print("\nConnecting via SSH to " + ipAddress + ":" + sshPort + " as " + sshUser + "...")
         tgt_shell = shell.connect_service(ipAddress, val(sshPort), sshUser, sshPass, "ssh")
@@ -785,7 +707,7 @@ while true
             print("<b>SSH login failed. Check credentials.</b>")
             continue
         end if
-        print("<b>SSH login successful! Dropping you in...</b>")
+        print("<b>SSH login successful!</b>")
         wait(0.5)
         tgt_comp = tgt_shell.host_computer
         tgt_shell.start_terminal
@@ -832,29 +754,26 @@ while true
             break
         end if
 
-        // Build exploit list with result info
+        // --- Build exploit list WITH result/privilege info from each file ---
         vulnFiles = []
         vulnFileNames = []
         vulnResults = []
         files = selectedLib.get_files
         if files != null and typeof(files) == "list" then
             for f in files
+                res = "Unknown"
                 content = f.get_content
-                if content == null then continue
-                // Parse result line
-                result_line = ""
-                for line in content.split(char(10))
-                    if line.indexOf("Result: ") == 0 then
-                        result_line = line[8:]
-                        break
-                    end if
-                end for
-                if result_line == "" then
-                    result_line = "Unknown"
+                if content != null then
+                    for line in content.split(char(10))
+                        if line.indexOf("Result: ") == 0 then
+                            res = line[8:]
+                            break
+                        end if
+                    end for
                 end if
                 vulnFiles.push(f)
                 vulnFileNames.push(f.name)
-                vulnResults.push(result_line)
+                vulnResults.push(res)
             end for
         end if
 
@@ -863,7 +782,7 @@ while true
             break
         end if
 
-        print("\n--- Exploits in " + libName + " ---")
+        print("\n--- Exploits in " + libName + " (type/privilege) ---")
         i = 0
         for name in vulnFileNames
             print("[" + i + "] " + name + " (" + vulnResults[i] + ")")
@@ -888,49 +807,32 @@ while true
         vulnData = vulnFile.get_content
 
         zone = ""
-        exploit = ""
+        exploitName = ""
         port = ""
         for line in vulnData.split(char(10))
             if line.indexOf("Zone: ") == 0 then zone = line[6:]
-            if line.indexOf("Exploit: ") == 0 then exploit = line[9:]
+            if line.indexOf("Exploit: ") == 0 then exploitName = line[9:]
             if line.indexOf("Port: ") == 0 then port = line[6:]
         end for
 
-        // Trim port to remove any whitespace or newline characters
-        port = port.trim
-
-        if zone == "" or exploit == "" or port == "" then
+        if zone == "" or exploitName == "" or port == "" then
             print("<b>Error: Could not parse vuln file. Skipping.</b>")
             continue
         end if
 
-        // --- Firing exploit with port override ---
         print("\n--- Firing exploit ---")
         print("Library : " + parsedLib + " v" + parsedVersion)
+        print("Port    : " + port)
         print("Zone    : " + zone)
-        print("Exploit : " + exploit)
-        print("Default port: " + port)
-        print("Enter port (press Enter to use default): ")
-        portInput = user_input
-        if portInput != "" then
-            port = portInput.trim
-        end if
-        // Ensure port is a number
-        if port == "" then port = "0"
-        portNum = port.to_int
-        if portNum == null then
-            print("<b>Error: Invalid port number. Using default 0.</b>")
-            portNum = 0
-        end if
-        print("Using port: " + portNum)
+        print("Exploit : " + exploitName)
         print("")
         wait(0.5)
 
-        if portNum == 0 then
+        if port == "0" then
             print("Target  : router (" + ipAddress + " port 0)")
             net_session = metax.net_use(ipAddress, 0)
         else
-            net_session = metax.net_use(ipAddress, portNum)
+            net_session = metax.net_use(ipAddress, port.to_int)
         end if
 
         if not net_session then
@@ -939,7 +841,7 @@ while true
         end if
 
         metaLib = net_session.dump_lib
-        result = metaLib.overflow(zone, exploit, password)
+        result = metaLib.overflow(zone, exploitName, password)
 
         if result == null then
             print("<b>Exploit failed. Falling back to exploit picker...</b>")
@@ -947,11 +849,11 @@ while true
             continue
         else if typeof(result) == "shell" then
             print("<b>Shell obtained on " + ipAddress + "! Dropping you in...</b>")
-            print("<b>Do your thing. When you are done type exit to clean up and leave.</b>")
+            print("<b>Do your thing. Type exit when done.</b>")
             wait(0.5)
             tgt_shell = result
             tgt_comp = tgt_shell.host_computer
-            if portNum == 0 then
+            tgt_shell.start_terminal
             print("\nCleaning up...")
             if net_session.is_root_active_user then
                 log_file = tgt_comp.File("/var/system.log")
@@ -983,9 +885,6 @@ while true
         else if typeof(result) == "file" then
             print("Result: File access obtained on " + ipAddress + "!")
             print("File: " + result.path)
-            if result.path.indexOf("passwd") != -1 or result.path.indexOf("shadow") != -1 then
-                process_passwd_file(result)
-            end if
             wait(0.5)
             continue
         else if typeof(result) == "computer" then
