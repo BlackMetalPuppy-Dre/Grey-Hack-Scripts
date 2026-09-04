@@ -1,4 +1,6 @@
-﻿// Command mapkit v3.0
+DO NOT USE BROKEN!!!! LEXER ERROR CAN'T SEEM TO FIX IT!
+
+// Command mapkit v3.0
 //print("Booting Mapkit V3.0...")
 //wait(0.2)
 //print("Gathering necessary File's and Lib's please wait!")
