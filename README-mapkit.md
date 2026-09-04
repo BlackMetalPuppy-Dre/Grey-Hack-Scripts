@@ -15,3 +15,5 @@ SSH direct login – manual SSH access
 Port override – change port when firing exploits
 
 Passwd decryption – decrypts /etc/passwd files
+
+Made with Claude AI and Deepseek (free versions)
