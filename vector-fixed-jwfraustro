@@ -3,7 +3,7 @@
 // VECTOR Password Brute Force from file 14725 passwords
 // ==================== CONFIGURATION ====================
 LOCAL_USER = "root"
-MAX_LENGTH = 10
+MAX_LENGTH = 9
 ORDER = 3
 PASSWORD_FILE = "/home/guest/vecpass.txt"
 
@@ -29,7 +29,6 @@ VECTOR.found_shell = null
 
 // ==================== LOAD PASSWORDS FROM FILE ====================
 VECTOR.load_from_file = function(filename)
-    // FIX: use computer.File not shell.launch/cat
     shell = get_shell
     comp = shell.host_computer
     fileObj = comp.File(filename)
@@ -42,7 +41,7 @@ VECTOR.load_from_file = function(filename)
         print("<color=#FF0000>[ERROR] Password file is empty: " + filename + "</color>")
         return false
     end if
-    // --- Handle both comma-separated and newline-separated formats ---
+
     words = []
     quote = char(34)
     if content.indexOf(",") != null then
@@ -56,7 +55,7 @@ VECTOR.load_from_file = function(filename)
             if token != "" then words.push(token)
         end for
     else
-        // Newline separated: one password per line
+
         lines = content.split("\n")
         for line in lines
             line = line.trim
@@ -88,7 +87,7 @@ VECTOR.build_chain = function
     print("<color=#9142DB>[VECTOR]</color> " + VECTOR.chains.indexes.len + " chains built.")
 end function
 
-// ==================== CONNECT (LOCAL ONLY) ====================
+// ==================== CONNECT (LOCAL) ====================
 VECTOR.connect = function(password)
     result = get_shell(LOCAL_USER, password)
     if typeof(result) == "shell" then
