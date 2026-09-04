@@ -1,4 +1,4 @@
-Start mapkit [IP target] BROKEN!!!
+Start mapkit [IP target]
 
 Full port scanning – finds open ports and services
 
