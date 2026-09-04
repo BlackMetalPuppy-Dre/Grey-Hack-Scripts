@@ -9,6 +9,7 @@
 //wait(0.2)
 //print("Starting...")
 //wait(0.2)
+//when you want (the startup thing remove the // infront of print and wait
 if params.len != 1 or params[0] == "-h" or params[0] == "--help" then exit ("<b>Usage: "+program_path.split("/")[-1]+" [ip_address]</b>")
 
 metax = include_lib("/lib/metaxploit.so")
