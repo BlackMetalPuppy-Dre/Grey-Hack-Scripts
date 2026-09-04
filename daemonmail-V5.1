@@ -350,7 +350,7 @@ process_emails = function()
         log_message("ERROR", "Mail login failed")
         return []
     end if
-    emails = mail_account.fetch
+    emails = mail_account.fetch()
     if emails == null then
         log_message("INFO", "No emails returned from fetch")
         return []
