@@ -7,8 +7,8 @@ print("=" * 60)
 
 // ==================== CONFIGURATION ====================
 LOCAL_USER = "root"
-MAX_LENGTH = 9
-ORDER = 3
+MAX_LENGTH = 10
+ORDER = 2
 
 // ==================== MAIN ====================
 VECTOR = {}
