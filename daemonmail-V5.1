@@ -450,23 +450,13 @@ execute_scan_queue = function()
     save_list(queue_file, scan_queue)
 end function
 // ==================== ARGUMENT PARSING ====================
-run_once = false
 auto_mode = false
-interval = 300
 old_pid = null
 parsed_old_pid = null
 i = 0
 while i < params.len
-    if params[i] == "--once" then
-        run_once = true
-    else if params[i] == "--auto" then
+    if params[i] == "--auto" then
         auto_mode = true
-    else if params[i] == "--interval" then
-        if i + 1 < params.len then
-            interval = val(params[i+1])
-            if interval == null or interval < 60 then interval = 60
-            i = i + 1
-        end if
     else if params[i] == "--old-pid" then
         if i + 1 < params.len then
             parsed_old_pid = params[i+1]
@@ -502,7 +492,7 @@ else if old_pid != null and mypid == null then
     attempt_kill_pid(old_pid)
 end if
 // ==================== MAIN LOOP ====================
-print("Daemon running... (interval: " + interval + "s)")
+print("Daemon running...")
 last_check = 0
 log_message("INFO", "Forcing initial email check...")
 new_targets = process_emails()
@@ -513,14 +503,9 @@ last_check = time()
 if scan_queue.len > 0 then
     execute_scan_queue()
 end if
-if run_once then
-    log_message("INFO", "One-shot mode: exiting.")
-    print("Done. Exiting.")
-    exit("")
-end if
 while true
     now = time()
-    if now - last_check >= interval then
+    if now - last_check >= 300 then
         last_check = now
         log_message("INFO", "Checking emails...")
         new_targets = process_emails()
