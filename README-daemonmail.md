@@ -10,4 +10,4 @@ daemonmail --auto -> gets pid -> scans mail -> que's targets -> launches mapkit 
 (when no new mails it waits 10 sec so you can ctrl+c or close terminal or it keeps opening daemonmail --auto --old-pid)
 
 use how you want to use it 
-(made with,Claude AI, Deepseek, GitHub Copilot)
+Made with,Claude AI(sonnet 4.6), Deepseek, GitHub Copilot, (free versions)
