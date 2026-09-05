@@ -1,0 +1,371 @@
+// vecpassgen.gs - LARGE
+// This script makes a LARGE password list for vector
+print("Generating LARGE password list...")
+
+shell = get_shell
+computer = shell.host_computer
+
+// ==================== MASSIVE BASE WORDS ====================
+baseWords = [
+    // Common passwords
+    "password", "pass", "passwd", "passw0rd", "p4ssword", "p4ss",
+    "letmein", "letme1n", "l3tmein", "access", "acc3ss",
+    "admin", "adm1n", "4dmin", "administrator", "root", "r00t",
+    "user", "usr", "guest", "g3st", "welcome", "w3lcome",
+    "hello", "hell0", "h3llo", "secret", "s3cret", "secr3t",
+    "private", "master", "m4ster", "super", "sup3r", "power",
+    // Animals
+    "dragon", "dr4gon", "tiger", "t1ger", "eagle", "3agle",
+    "falcon", "f4lcon", "wolf", "w0lf", "bear", "b3ar",
+    "lion", "l1on", "panther", "p4nther", "cobra", "c0bra",
+    "viper", "v1per", "hawk", "h4wk", "raven", "r4ven",
+    "phoenix", "ph03nix", "shark", "sh4rk", "thunder", "th0nder",
+    "jaguar", "j4guar", "leopard", "l3opard", "cheetah", "ch3etah",
+    "python", "pyth0n", "scorpion", "sc0rpion", "mantis", "m4ntis",
+    // Nature
+    "fire", "f1re", "ice", "wind", "earth", "ocean", "oc34n",
+    "mountain", "m0untain", "river", "r1ver", "forest", "f0rest",
+    "storm", "st0rm", "lightning", "l1ghtning", "thunder", "th0nder",
+    "volcano", "v0lcano", "tsunami", "glacier", "avalanche",
+    "desert", "d3sert", "jungle", "j0ngle", "arctic", "4rctic",
+    // Space
+    "sun", "moon", "m00n", "star", "st4r", "sky", "cloud",
+    "mars", "m4rs", "venus", "v3nus", "jupiter", "j0piter",
+    "saturn", "s4turn", "neptune", "n3ptune", "galaxy", "g4laxy",
+    "cosmos", "c0smos", "nebula", "n3bula", "comet", "c0met",
+    "asteroid", "4steroid", "orbit", "0rbit", "nova", "n0va",
+    // Tech / Hacking
+    "cyber", "cyb3r", "hack", "h4ck", "hacker", "h4cker",
+    "cracker", "cr4cker", "shell", "sh3ll", "root", "r00t",
+    "admin", "4dmin", "system", "syst3m", "network", "n3twork",
+    "security", "s3curity", "firewall", "f1rewall", "proxy", "pr0xy",
+    "server", "s3rver", "matrix", "m4trix", "binary", "b1nary",
+    "code", "c0de", "script", "scr1pt", "exploit", "3xploit",
+    "payload", "p4yload", "trojan", "tr0jan", "virus", "v1rus",
+    "worm", "w0rm", "botnet", "b0tnet", "keylog", "k3ylog",
+    "phish", "ph1sh", "spoof", "sp00f", "ddos", "dd0s",
+    "sqlmap", "nmap", "metasploit", "burp", "wireshark",
+    // Colors
+    "red", "r3d", "blue", "bl0e", "green", "gr33n",
+    "black", "bl4ck", "white", "wh1te", "purple", "p0rple",
+    "yellow", "y3llow", "orange", "0range", "pink", "p1nk",
+    "gold", "g0ld", "silver", "s1lver", "bronze", "br0nze",
+    "crimson", "cr1mson", "scarlet", "sc4rlet", "indigo", "1ndigo",
+    // Religion / Myth
+    "god", "g0d", "jesus", "j3sus", "christ", "chr1st",
+    "satan", "s4tan", "demon", "d3mon", "angel", "4ngel",
+    "devil", "d3vil", "hell", "h3ll", "heaven", "h34ven",
+    "thor", "th0r", "zeus", "z3us", "odin", "0din",
+    "zeus", "apollo", "apollo11", "hermes", "poseidon",
+    "buddha", "allah", "spirit", "sp1rit", "ghost", "gh0st",
+    "soul", "s0ul", "karma", "k4rma", "nirvana", "n1rvana",
+    // Sports
+    "sport", "sp0rt", "game", "g4me", "play", "pl4y",
+    "win", "w1n", "champion", "ch4mpion", "hero", "h3ro",
+    "legend", "l3gend", "trophy", "tr0phy", "victory", "v1ctory",
+    "soccer", "s0ccer", "football", "f00tball", "basketball",
+    "baseball", "hockey", "h0ckey", "tennis", "t3nnis",
+    "golf", "g0lf", "boxing", "b0xing", "mma", "ufc",
+    "wrestling", "wr3stling", "nascar", "racing", "r4cing",
+    // Cars
+    "mustang", "m0stang", "camaro", "c4maro", "corvette",
+    "charger", "ch4rger", "challenger", "viper", "v1per",
+    "ferrari", "f3rrari", "lamborghini", "porsche", "p0rsche",
+    "honda", "h0nda", "toyota", "t0yota", "bmw", "b3mw",
+    "audi", "4udi", "mercedes", "ford", "f0rd", "chevy",
+    "dodge", "d0dge", "nissan", "n1ssan", "subaru", "mazda",
+    // Food / Drink
+    "coffee", "c0ffee", "beer", "b33r", "wine", "w1ne",
+    "whiskey", "whisk3y", "vodka", "v0dka", "tequila", "t3quila",
+    "pizza", "p1zza", "burger", "b0rger", "pasta", "p4sta",
+    "cheese", "ch33se", "bacon", "b4con", "steak", "st34k",
+    "chocolate", "ch0colate", "candy", "c4ndy", "sugar", "sug4r",
+    // Music
+    "music", "m0sic", "rock", "r0ck", "jazz", "j4zz",
+    "metal", "m3tal", "punk", "p0nk", "blues", "bl0es",
+    "reggae", "r3ggae", "hiphop", "h1phop", "rap", "r4p",
+    "guitar", "gu1tar", "piano", "p14no", "drums", "dr0ms",
+    "bass", "b4ss", "violin", "v10lin", "trumpet", "tr0mpet",
+    // Movies / Games
+    "matrix", "m4trix", "batman", "b4tman", "superman", "sup3rman",
+    "spiderman", "sp1derman", "ironman", "1ronman", "hulk", "h0lk",
+    "thor", "th0r", "avenger", "4venger", "starwars", "st4rwars",
+    "jedi", "j3di", "sith", "s1th", "force", "f0rce",
+    "terminator", "t3rminator", "predator", "pr3dator", "alien",
+    "minecraft", "m1necraft", "fortnite", "f0rtnite", "doom", "d00m",
+    "quake", "qu4ke", "counter", "c0unter", "strike", "str1ke",
+    "pokemon", "p0kemon", "pikachu", "p1kachu", "zelda", "z3lda",
+    "mario", "m4rio", "luigi", "lu1gi", "sonic", "s0nic",
+    // Countries / Cities
+    "america", "4merica", "russia", "r0ssia", "china", "ch1na",
+    "england", "3ngland", "germany", "g3rmany", "france", "fr4nce",
+    "london", "l0ndon", "paris", "p4ris", "berlin", "b3rlin",
+    "moscow", "m0scow", "tokyo", "t0kyo", "sydney", "s0dney",
+    "newyork", "n3wyork", "vegas", "v3gas", "chicago", "ch1cago",
+    "miami", "m14mi", "boston", "b0ston", "dallas", "d4llas",
+    // Misc common
+    "monkey", "m0nkey", "shadow", "sh4dow", "silver", "s1lver",
+    "sunshine", "sun5hine", "princess", "pr1ncess", "dragon", "dr4gon",
+    "baseball", "football", "master", "m4ster", "jordan", "j0rdan",
+    "harley", "h4rley", "ranger", "r4nger", "hunter", "h0nter",
+    "killer", "k1ller", "sniper", "sn1per", "soldier", "s0ldier",
+    "captain", "c4ptain", "general", "g3neral", "colonel", "c0lonel",
+    "maverick", "m4verick", "bandit", "b4ndit", "outlaw", "0utlaw",
+    "rebel", "r3bel", "renegade", "r3negade", "pirate", "p1rate",
+    "ninja", "n1nja", "samurai", "s4murai", "warrior", "w4rrior",
+    "viking", "v1king", "spartan", "sp4rtan", "gladiator",
+    "thunder", "th0nder", "lightning", "l1ghtning", "hurricane",
+    "tornado", "t0rnado", "cyclone", "c0clone", "typhoon"]
+
+names = [
+    "john", "jane", "mike", "sarah", "dave", "lisa", "bob", "sue",
+    "tom", "mary", "jim", "ann", "bill", "joe", "emma", "jack",
+    "rose", "jill", "mark", "kate", "paul", "amy", "sam", "ben",
+    "liz", "dan", "kim", "jake", "max", "zoe", "nick", "jen",
+    "tim", "rob", "helen", "fred", "alex", "chris", "ryan", "matt",
+    "josh", "adam", "luke", "evan", "sean", "chad", "brad", "kyle",
+    "tyler", "jason", "kevin", "aaron", "brian", "scott", "eric",
+    "james", "peter", "andrew", "steven", "thomas", "daniel", "david",
+    "michael", "robert", "richard", "charles", "joseph", "edward",
+    "jessica", "ashley", "amanda", "brittany", "stephanie", "jennifer",
+    "melissa", "nicole", "rachel", "megan", "lauren", "hannah",
+    "taylor", "morgan", "jordan", "riley", "casey", "jamie", "quinn",
+    "derek", "harry", "barry", "larry", "terry", "jerry", "perry",
+    "gary", "barry", "tony", "joey", "ricky", "donnie", "ronnie"]
+
+teams = [
+    "eagles", "giants", "cowboys", "patriots", "packers", "steelers",
+    "niners", "raiders", "seahawks", "lions", "bears", "colts",
+    "ravens", "browns", "texans", "titans", "jaguars", "chargers",
+    "chiefs", "broncos", "buccaneers", "panthers", "saints", "falcons",
+    "cardinals", "rams", "vikings", "dolphins", "bills", "jets",
+    "yankees", "redsox", "dodgers", "cubs", "phillies", "mets",
+    "rangers", "astros", "braves", "tigers", "royals", "twins",
+    "celtics", "lakers", "bulls", "heat", "spurs", "thunder",
+    "warriors", "cavaliers", "clippers", "nets", "knicks", "sixers",
+    "rockets", "nuggets", "blazers", "grizzlies", "pelicans", "hawks",
+    "penguins", "blackhawks", "bruins", "canadiens", "rangers",
+    "capitals", "leafs", "flames", "oilers", "canucks", "sharks"]
+
+keyboardPatterns = [
+    "qwerty", "qwertyui", "qwertyuiop", "asdfgh", "asdfghjkl",
+    "zxcvbn", "zxcvbnm", "qazwsx", "edcrfv", "rfvtgb",
+    "1q2w3e4r", "1q2w3e4r5t", "1qaz2wsx", "qwerty123",
+    "abcd1234", "abcdef", "abcdefgh", "abcdefghij",
+    "1234qwer", "qwer1234", "pass1234", "1234pass"]
+
+months = ["january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december",
+    "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+
+// ==================== LEET SPEAK ====================
+applyLeet = function(word)
+    result = ""
+    for c in word
+        if c == "a" then
+            result = result + "4"
+        else if c == "e" then
+            result = result + "3"
+        else if c == "i" then
+            result = result + "1"
+        else if c == "o" then
+            result = result + "0"
+        else if c == "s" then
+            result = result + "5"
+        else if c == "t" then
+            result = result + "7"
+        else if c == "g" then
+            result = result + "9"
+        else if c == "b" then
+            result = result + "8"
+        else
+            result = result + c
+        end if
+    end for
+    return result
+end function
+
+// ==================== FILE SETUP ====================
+outputPath = "/home/guest/vecpass.txt"
+computer.touch("/home/guest", "vecpass.txt")
+outFile = computer.File(outputPath)
+if outFile == null then
+    print("Error: could not create output file")
+    exit("")
+end if
+outFile.set_content("")
+
+// ==================== BATCH WRITER ====================
+batch = []
+batchSize = 200
+total = 0
+
+flushBatch = function()
+    if batch.len == 0 then return
+    existing = outFile.get_content
+    if existing == null then existing = ""
+    outFile.set_content(existing + batch.join("\n") + "\n")
+    batch = []
+end function
+
+addWord = function(word)
+    if word == null or word == "" then return
+    batch.push(word)
+    total = total + 1
+    if batch.len >= batchSize then
+        flushBatch()
+    end if
+end function
+
+// ==================== GENERATE ====================
+
+// --- Plain base words ---
+print("Pass 1: plain words...")
+for word in baseWords
+    addWord(word)
+    addWord(word.upper)
+    addWord(word[0].upper + word[1:])
+end for
+
+// --- Base words + numbers 0-99 ---
+print("Pass 2: words + numbers 0-99...")
+for word in baseWords
+    n = 0
+    while n <= 99
+        addWord(word + n)
+        n = n + 1
+    end while
+end for
+
+// --- Base words + years 1970-2025 ---
+print("Pass 3: words + years...")
+for word in baseWords
+    y = 1970
+    while y <= 2025
+        addWord(word + y)
+        y = y + 1
+    end while
+end for
+
+// --- Base words + special suffixes ---
+print("Pass 4: words + special suffixes...")
+suffixes = ["!", "!!", "123", "1234", "12345", "123456",
+    "1!", "2!", "99", "01", "69", "007", "777", "666", "333",
+    "000", "111", "222", "444", "555", "888", "999",
+    "@", "#", "$", "@123", "#1", "!1", "!123"]
+for word in baseWords
+    for suffix in suffixes
+        addWord(word + suffix)
+    end for
+end for
+
+// --- Names + numbers ---
+print("Pass 5: names + numbers 0-99...")
+for name in names
+    addWord(name)
+    n = 0
+    while n <= 99
+        addWord(name + n)
+        n = n + 1
+    end while
+end for
+
+// --- Names + years ---
+print("Pass 6: names + years 1970-2005...")
+for name in names
+    y = 1970
+    while y <= 2005
+        addWord(name + y)
+        addWord(name + (y - 1900))
+        y = y + 1
+    end while
+end for
+
+// --- Teams + numbers ---
+print("Pass 7: teams + numbers...")
+for team in teams
+    addWord(team)
+    n = 1
+    while n <= 99
+        addWord(team + n)
+        n = n + 1
+    end while
+end for
+
+// --- Keyboard patterns + numbers ---
+print("Pass 8: keyboard patterns...")
+for pattern in keyboardPatterns
+    addWord(pattern)
+    n = 0
+    while n <= 99
+        addWord(pattern + n)
+        n = n + 1
+    end while
+end for
+
+// --- Leet speak ---
+print("Pass 9: leet speak...")
+for word in baseWords
+    leet = applyLeet(word)
+    addWord(leet)
+    n = 0
+    while n <= 99
+        addWord(leet + n)
+        n = n + 1
+    end while
+    y = 1990
+    while y <= 2025
+        addWord(leet + y)
+        y = y + 1
+    end while
+end for
+
+// --- Months + years ---
+print("Pass 10: months + years...")
+for month in months
+    addWord(month)
+    y = 1990
+    while y <= 2025
+        addWord(month + y)
+        addWord(month + (y - 1900))
+        y = y + 1
+    end while
+    n = 1
+    while n <= 31
+        addWord(month + n)
+        n = n + 1
+    end while
+end for
+
+// --- Numeric sequences ---
+print("Pass 11: numeric sequences...")
+sequences = [
+    "123456", "1234567", "12345678", "123456789", "1234567890",
+    "0987654321", "111111", "222222", "333333", "444444", "555555",
+    "666666", "777777", "888888", "999999", "000000",
+    "112233", "123123", "121212", "696969", "131313",
+    "246810", "135790", "147258", "258369", "369258",
+    "11111111", "00000000", "12341234", "11223344",
+    "1234abcd", "abcd1234", "abc123", "123abc",
+    "pass123", "123pass", "admin123", "123admin",
+    "root123", "123root", "user123", "test123"]
+for seq in sequences
+    addWord(seq)
+end for
+
+// --- Word + word combos ---
+print("Pass 12: word combos...")
+shortWords = ["my", "the", "big", "old", "new", "hot", "top", "mad",
+    "bad", "sad", "god", "dog", "cat", "rat", "bat"]
+for w1 in shortWords
+    for w2 in baseWords
+        addWord(w1 + w2)
+    end for
+end for
+
+// Flush final batch
+flushBatch()
+
+print("=" * 40)
+print("DONE! Generated ~" + total + " passwords")
+print("Saved to: " + outputPath)
