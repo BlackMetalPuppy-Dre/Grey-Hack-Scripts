@@ -57,7 +57,7 @@ if computer.File(targetsFolder) == null then
 end if
 
 // --- Global: Track discovered services on target ---
-discoveredServices = []  // each entry: {"name": libName, "version": libVersion, "port": portNumber}
+discoveredServices = []  
 
 // ================================================================
 //  SMART EXPLOIT COLLECTION (Uses exploits from /targets/<router_ip>/)
@@ -226,8 +226,9 @@ info = "PORT STATE SERVICE VERSION LAN"
 openPorts = []
 
 print("\nStarting mapkit v3.0 at " + current_date)
+wait(1)
 print("Interesting ports on " + ipAddress + "\n")
-
+wait(1)
 for port in ports
     service_info = router.port_info(port)
     lan_ips = port.get_lan_ip
@@ -242,7 +243,7 @@ end for
 
 print(format_columns(info) + "\n")
 output = output + format_columns(info) + char(10)
-
+wait(1)
 new_types = []
 ssh_scanned = false
 ftp_scanned = false
