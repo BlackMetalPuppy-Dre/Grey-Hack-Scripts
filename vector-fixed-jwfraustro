@@ -1,11 +1,21 @@
-//Credits to https://github.com/jwfraustro/Vector-Greyhackgame/blob/main/Vector.src could not be compiled FIXED (this one can be compiled in grey hack)
-//AND WAY MORE PASSWORDS
-// VECTOR Password Brute Force from file 14725 passwords
+// Credits to https://github.com/jwfraustro/Vector-Greyhackgame/blob/main/Vector.src could not be compiled FIXED (this one can be compiled in grey hack)
+// AND WAY MORE PASSWORDS AND CHANCE TO CRACK
+// VECTOR Password Brute Force – Markov with Case Variations from files use the vecpass.txt from here and use the vecpassgen for more success! that makes 6 password files!
+// LOCAL USE ONLY!! When guest priveleges forced by admin you use this! drop in guest folder with files and fire it off! MAY TAKE A MINUTE TO CRACK! 
 // ==================== CONFIGURATION ====================
 LOCAL_USER = "root"
-MAX_LENGTH = 9
-ORDER = 3
-PASSWORD_FILE = "/home/guest/vecpass.txt"
+MAX_LENGTH = 10
+ORDER = 4
+
+// List of password files to try (in order)
+PASSWORD_FILES = [
+    "/home/guest/vecpass/vecpass.txt",
+    "/home/guest/vecpass/vecpass1.txt",
+    "/home/guest/vecpass/vecpass2.txt",
+    "/home/guest/vecpass/vecpass3.txt",
+    "/home/guest/vecpass/vecpass4.txt",
+    "/home/guest/vecpass/vecpass5.txt",
+    "/home/guest/vecpass/vecpass6.txt"]
 
 // ==================== MAIN ====================
 VECTOR = {}
@@ -29,14 +39,14 @@ VECTOR.found_shell = null
 
 // ==================== LOAD PASSWORDS FROM FILE ====================
 VECTOR.load_from_file = function(filename)
-    shell = get_shell
+    shell = get_shell()
     comp = shell.host_computer
     fileObj = comp.File(filename)
     if fileObj == null then
         print("<color=#FF0000>[ERROR] Cannot find password file: " + filename + "</color>")
         return false
     end if
-    content = fileObj.get_content
+    content = fileObj.get_content()
     if content == null or content == "" then
         print("<color=#FF0000>[ERROR] Password file is empty: " + filename + "</color>")
         return false
@@ -45,31 +55,31 @@ VECTOR.load_from_file = function(filename)
     words = []
     quote = char(34)
     if content.indexOf(",") != null then
-        // Comma separated: "pass1","pass2",...
         tokens = content.split(",")
         for token in tokens
             token = token.trim
-            if token.len >= 2 and token[0] == quote and token[token.len-1] == quote then
-                token = token[1:token.len-1]
+            if token.len >= 2 and token[0] == quote and token[-1] == quote then
+                token = token[1:-1]
             end if
             if token != "" then words.push(token)
         end for
     else
-
         lines = content.split("\n")
         for line in lines
             line = line.trim
             if line != "" then words.push(line)
         end for
     end if
+
     VECTOR.keywords = words
     print("<color=#9142DB>[VECTOR]</color> Loaded " + VECTOR.keywords.len + " passwords from " + filename)
     return true
 end function
 
-// ==================== BUILD MARKOV CHAIN ====================
+// ==================== BUILD MARKOV CHAIN (Uppercase Only) ====================
 VECTOR.build_chain = function
     for word in VECTOR.keywords
+        // Train on UPPERCASE to learn patterns
         word = word.upper
         i = 0
         while i <= word.len - VECTOR.order - 1
@@ -87,7 +97,35 @@ VECTOR.build_chain = function
     print("<color=#9142DB>[VECTOR]</color> " + VECTOR.chains.indexes.len + " chains built.")
 end function
 
-// ==================== CONNECT (LOCAL) ====================
+// ==================== CASE VARIATION GENERATOR ====================
+VECTOR.try_variations = function(token)
+    // Try different case variations of the generated token
+    variations = []
+    
+    // 1. Original (all uppercase from chain)
+    variations.push(token)
+    
+    // 2. All lowercase
+    lower = token.lower
+    if lower != token then variations.push(lower)
+    
+    // 3. Capitalized (first letter uppercase, rest lowercase)
+    cap = token[0].upper + token[1:].lower
+    if cap != token and cap != lower then variations.push(cap)
+    
+    // Test each variation
+    for pwd in variations
+        VECTOR.attempts = VECTOR.attempts + 1
+        result = VECTOR.connect(pwd)
+        if result != null then
+            print("<color=#00FF00>[+] Password found: <b>" + pwd + "</b></color>")
+            return result
+        end if
+    end for
+    return null
+end function
+
+// ==================== CONNECT (LOCAL ONLY) ====================
 VECTOR.connect = function(password)
     result = get_shell(LOCAL_USER, password)
     if typeof(result) == "shell" then
@@ -98,22 +136,23 @@ end function
 
 // ==================== RECURSE ====================
 VECTOR.recurse = function(token, max_length)
-    password = token.lower
-    VECTOR.attempts = VECTOR.attempts + 1
-    result = VECTOR.connect(password)
+    // Try variations of the current token
+    result = VECTOR.try_variations(token)
     if result != null then
-        print("<color=#00FF00>[+] Password found: <b>" + password + "</b></color>")
         return result
     end if
+
     if token.len >= max_length then
         return null
     end if
+
     start_idx = token.len - VECTOR.order
     if start_idx < 0 then return null
     sub_text = token[start_idx:start_idx + VECTOR.order]
     if not VECTOR.chains.hasIndex(sub_text) then
         return null
     end if
+
     next_chars = VECTOR.chains[sub_text]
     for next_char in next_chars
         new_token = token + next_char
@@ -153,16 +192,24 @@ VECTOR.start = function
     print("<color=#9142DB>[VECTOR]</color> Max length: " + VECTOR.max_length)
     print("<color=#9142DB>[VECTOR]</color> Markov order: " + VECTOR.order)
     print("")
-    if not VECTOR.load_from_file(PASSWORD_FILE) then
-        print("Aborting.")
-        return
-    end if
-    VECTOR.build_chain
-    result = VECTOR.crack
-    if result != null then
-        print("\n<color=#00FF00>[VECTOR] Shell obtained! You are back in business.</color>")
-        result.start_terminal
-    end if
+
+    for file in PASSWORD_FILES
+        print("\n<color=#9142DB>[VECTOR]</color> Trying password file: " + file)
+        VECTOR.keywords = []
+        VECTOR.chains = {}
+        if not VECTOR.load_from_file(file) then
+            continue
+        end if
+        VECTOR.build_chain
+        result = VECTOR.crack
+        if result != null then
+            print("\n<color=#00FF00>[VECTOR] Shell obtained from file: " + file + "</color>")
+            result.start_terminal
+            return
+        end if
+    end for
+
+    print("\n<color=#FF0000>[VECTOR] Password not found in any of the provided files.</color>")
 end function
 
 // ==================== RUN ====================
