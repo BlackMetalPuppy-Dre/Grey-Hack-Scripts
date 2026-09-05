@@ -1,7 +1,7 @@
-// Command mapkit [Target IP]
-//Works great with daemonmail
-//Can be used as standalone
-// Command mapkit v3.0 - Privilege-Aware
+// Command mapkit [Target IP] Privilege-Aware
+// Works great with daemonmail
+// Can be used as standalone
+// mapkit 3.0
 print("Booting Mapkit V3.0...")
 wait(0.2)
 print("Gathering necessary File's and Lib's please wait!")
