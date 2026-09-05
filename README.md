@@ -8,7 +8,7 @@ daemonmail: scans mail, que's IP addresses launches mapkit and harvests banks fr
 Vector: Brute force password if a Admin is blocking higher privileges you can drop vector and vecpass.txt in the guest map of your target and run it wait and you get the password about 30 sec and drops you in the root shell.
 Passwords list updated with 14725 passwords
 
-Vecpassgen: Generates A LARGE password list for vector so u have more chance to crack a password (when the first vecpass.txt file fails)
+Vecpassgen: Generates A LARGE password list for vector so u have more chance to crack a password (when the first vecpass.txt file fails) IT DOES TAKE A MOMENT!
 
 Credits vector TO JWFRAUSTRO 
 https://github.com/jwfraustro/Vector-Greyhackgame/blob/main/Vector.src
