@@ -1,6 +1,7 @@
 // Command mapkit [Target IP]
 //Works great with daemonmail
 //Can be used as standalone
+// Command mapkit v3.0 - Privilege-Aware (Harvest Removed)
 print("Booting Mapkit V3.0...")
 wait(0.2)
 print("Gathering necessary File's and Lib's please wait!")
@@ -781,7 +782,7 @@ while true
             print("<b>No exploit files found in " + libName + ". Going back.</b>")
             break
         end if
-
+		// attack picker phase
         print("\n--- Exploits in " + libName + " (type/privilege) ---")
         i = 0
         for name in vulnFileNames
@@ -826,6 +827,12 @@ while true
         print("Zone    : " + zone)
         print("Exploit : " + exploitName)
         print("")
+		
+		// port overwrite prompt
+		portInput = user_input("Port (press Enter to use " + port + "): ").trim
+        if portInput != "" then port = portInput
+        port = port.trim
+        print("Using port: " + port)
         wait(0.5)
 
         if port == "0" then
