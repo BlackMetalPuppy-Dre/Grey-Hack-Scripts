@@ -197,22 +197,35 @@ outFile.set_content("")
 
 // ==================== BATCH WRITER ====================
 batch = []
-batchSize = 200
+batchSize = 20
 total = 0
+firstWrite = true
 
 flushBatch = function()
     if batch.len == 0 then return
     existing = outFile.get_content
     if existing == null then existing = ""
-    outFile.set_content(existing + batch.join("\n") + "\n")
-    batch = []
+    q = char(34)
+    chunk = ""
+    for word in globals.batch
+        if existing == "" and chunk == "" and globals.firstWrite then
+            chunk = q + word + q
+            globals.firstWrite = false
+        else
+            chunk = chunk + "," + q + word + q
+        end if
+    end for
+    // --- FIX: add comma + newline at end of each batch line ---
+    chunk = chunk + "," + char(10)
+    outFile.set_content(existing + chunk)
+    globals.batch = []
 end function
 
 addWord = function(word)
     if word == null or word == "" then return
-    batch.push(word)
-    total = total + 1
-    if batch.len >= batchSize then
+    globals.batch.push(word)
+    globals.total = globals.total + 1
+    if globals.batch.len >= batchSize then
         flushBatch()
     end if
 end function
