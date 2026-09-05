@@ -1,6 +1,6 @@
-// mail_automation_daemon v5.2
+// mail_automation_daemon v5.3 ONLY WORKS WITH MAPKIT!
 print("=" * 60)
-print("Mail Automation Daemon v5.2")
+print("Mail Automation Daemon v5.3")
 print("=" * 60)
 
 // ==================== CONFIGURATION ====================
@@ -211,7 +211,6 @@ try_harvest = function(target_ip, targetsFolder)
         return
     end if
 
-    // --- Collect ALL File exploits from ALL lib folders including router ---
     allFileExploits = []
 
     for libDir in tgtFolderObj.get_folders
@@ -297,7 +296,6 @@ try_harvest = function(target_ip, targetsFolder)
             continue
         end if
 
-        // --- Find /home from wherever we landed ---
         if result.path == "/home" then
             homeFolder = result
             log_message("INFO", "Harvest: got /home directly via " + fLib + " port " + fPort)
@@ -321,7 +319,6 @@ try_harvest = function(target_ip, targetsFolder)
         return
     end if
 
-    // --- Read Mail.txt and Bank.txt for each user ---
     for userFolder in homeFolder.get_folders
         if userFolder.name.lower == "guest" then continue
         log_message("DEBUG", "Harvest: checking user " + userFolder.name)
@@ -330,7 +327,6 @@ try_harvest = function(target_ip, targetsFolder)
             if subFolder.name != "Config" then continue
 
             for f in subFolder.get_files
-                // --- Mail.txt ---
                 if f.name == "Mail.txt" then
                     if not f.has_permission("r") then continue
                     content = f.get_content
@@ -351,7 +347,6 @@ try_harvest = function(target_ip, targetsFolder)
                     end if
                 end if
 
-                // --- Bank.txt ---
                 if f.name == "Bank.txt" then
                     if not f.has_permission("r") then continue
                     userPass = f.get_content.split(":")
@@ -528,16 +523,8 @@ while i < params.len
     i = i + 1
 end while
 
-// --- Determine current PID and persist it ---
-mypid = get_current_pid()
-if mypid != null then
-    saved = save_my_pid(mypid)
-    if saved then log_message("INFO", "Saved current PID: " + mypid)
-else
-    log_message("WARN", "Could not determine current PID")
-end if
-
-// --- Decide which old PID to kill ---
+// ==================== PID MANAGEMENT (FIXED ORDER) ====================
+// --- STEP 1: Read old PID BEFORE saving our own ---
 if parsed_old_pid != null then
     old_pid = parsed_old_pid
 else
@@ -550,11 +537,22 @@ else
     end if
 end if
 
-// --- Kill old PID if different from ours ---
+// --- STEP 2: Get our own PID ---
+mypid = get_current_pid()
+
+// --- STEP 3: Kill old PID if different from ours ---
 if old_pid != null and mypid != null and old_pid != mypid then
     attempt_kill_pid(old_pid)
 else if old_pid != null and mypid == null then
     attempt_kill_pid(old_pid)
+end if
+
+// --- STEP 4: NOW save our PID after killing old one ---
+if mypid != null then
+    saved = save_my_pid(mypid)
+    if saved then log_message("INFO", "Saved current PID: " + mypid)
+else
+    log_message("WARN", "Could not determine current PID")
 end if
 
 // ==================== MAIN LOOP ====================
