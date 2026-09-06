@@ -4,7 +4,7 @@ Full port scanning – finds open ports and services
 
 Router scan – scans kernel_router.so for exploits
 
-Service scan – scans SSH, HTTP, FTP, SQL, SMTP
+Service scan – scans SSH, HTTP, FTP, SQL, SMTP and all the other services that are on the IP you are scanning!
 When shell given it asks for user input for what kind of privileges you get 1 root 2 guest 3 user 4 custom name
 
 Exploit database – saves all results to /targets/
