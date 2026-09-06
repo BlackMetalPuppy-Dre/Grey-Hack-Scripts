@@ -9,7 +9,7 @@ When shell given it asks for user input for what kind of privileges you get 1 ro
 
 Exploit database – saves all results to /targets/
 
-Attack phase – pick a library (gives version of the libservices that are running on IP removes closed ports) → pick an exploit → fire it
+Attack phase – pick a library (gives version of the libservices that are running on IP removes closed ports) → pick service you want to exploit →pick exploit → fire it
 
 SSH direct login – manual SSH access
 
