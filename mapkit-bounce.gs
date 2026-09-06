@@ -8,7 +8,7 @@ wait(0.2)
 print("Loading complete!")
 wait(0.2)
 print("Starting...")
-wait(0.2) //you can delete this if you dont want this startup sequence! 
+wait(0.2) //you can delete this if you don't want this startup sequence! 
 
 if params.len != 1 or params[0] == "-h" or params[0] == "--help" then exit ("<b>Usage: "+program_path.split("/")[-1]+" [ip_address]</b>")
 
