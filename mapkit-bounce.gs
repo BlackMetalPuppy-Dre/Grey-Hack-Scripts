@@ -19,8 +19,8 @@ if params.len != 1 or params[0] == "-h" or params[0] == "--help" then exit ("<b>
 bounceServers = [
     {"ip": "Your-IP-here",  "user": "root", "pass": "Your-PASS-here", "port": 22},
     {"ip": "Your-IP-here",  "user": "root", "pass": "Your-PASS-here",  "port": 22},
-    {"ip": "Your-IP-here",  "user": "root", "pass": "Your-PASS-here",    "port": 22}
-]
+    {"ip": "Your-IP-here",  "user": "root", "pass": "Your-PASS-here",    "port": 22}]
+
 exploitServerIP   = "Your-ExploitServerIP-here"
 exploitServerUser = "root"
 exploitServerPass = "Your-PASS-here"
