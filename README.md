@@ -11,8 +11,8 @@ Mapwatcher: Does what is says watches the map targets and when daemonmail drops 
 
 USE daemonmail, mapwatcher, and mapkit-bounce, to have a automated suite and improve your work flow!
 
-Vector: Brute force password if a Admin forced guest privileges you can drop vector and your vecpass folder with your vecpass.txt files in the guest map of your target and run it wait and you get the password about 30 sec MAX and drops you in the root shell.
-Passwords list updated with 14725 passwords use this list and 
+Vector: Brute force password if a Admin forced guest privileges or you have only guest shell exploits you can drop vector and your vecpass folder with your vecpass.txt files in the guest map of your target and run it wait and you get the password never took longer than 30 seconds for me and drops you in root shell. CAN TAKE LONGER THAN 30 SECONDS! Depends on the password of the machine itself!
+Passwords list updated with 14725 passwords use this list PLUS the 6 vecpass files that vecpassgen made you have the most success!
 
 Vecpassgen: Generates LARGE password lists 15K words per file for vector so u have more chance to crack a password (when the first vecpass.txt file fails) IT DOES TAKE A MOMENT!
 use the vecpassgen in game for the other files and delete the master_list.txt file
