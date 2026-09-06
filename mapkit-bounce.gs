@@ -1,71 +1,63 @@
-// Command mapkit v3.1 - Bounce Chain + Privilege-Aware great for daemonmail that opens mapkit [target-ip] l2o2oks 
-print("Booting Mapkit V3.1...")
+// Command mapkit v3.2 - Exploit Server Edition + Safety Bounce works great with daemonmail+mapwatcher! Automation HACKING SUITE! WORKS AS STANDALONE 
+print("Booting Mapkit V3.2...")
 wait(0.2)
 print("Gathering necessary File's and Lib's please wait!")
 wait(0.2)
-print("Starting Mapkit V3.1")
+print("Starting Mapkit V3.2")
 wait(0.2)
 print("Loading complete!")
 wait(0.2)
 print("Starting...")
-wait(0.2) //you can delete this if you don't want this startup sequence! 
+wait(0.2)
 
-if params.len != 1 or params[0] == "-h" or params[0] == "--help" then exit ("<b>Usage: "+program_path.split("/")[-1]+" [ip_address]</b>")
+if params.len != 1 or params[0] == "-h" or params[0] == "--help" then
+    exit("<b>Usage: " + program_path.split("/")[-1] + " <ip_address></b>")
+end if
+
+shell = get_shell
+computer = shell.host_computer
 
 // ================================================================
-// --- BOUNCE TO EXPLOIT SERVER ---
+// --- SAFETY BOUNCE ---
+// Already on exploit server - bounce just for extra anonymity
 // ================================================================
 
 bounceServers = [
-    {"ip": "Your-IP-here",  "user": "root", "pass": "Your-PASS-here", "port": 22},
-    {"ip": "Your-IP-here",  "user": "root", "pass": "Your-PASS-here",  "port": 22},
-    {"ip": "Your-IP-here",  "user": "root", "pass": "Your-PASS-here",    "port": 22}]
-//you can add more bounce servers of cource and change ports if needed
-exploitServerIP   = "Your-ExploitServerIP-here"
-exploitServerUser = "root"
-exploitServerPass = "Your-PASS-here"
-exploitServerPort = 22
+    {"ip": "YOUR-BOUNCE-IP-HERE",  "user": "root", "pass": "YOUR-PASS-HERE", "port": 22},
+    {"ip": "YOUR-BOUNCE-IP-HERE",  "user": "root", "pass": "YOUR-PASS-HERE",  "port": 22},
+    {"ip": "YOUR-BOUNCE-IP-HERE",  "user": "root", "pass": "YOUR-PASS-HERE",    "port": 22},
+	{"ip": "YOUR-EXPLOIT-IP-HERE",  "user": "root", "pass": "YOUR-PASS-HERE",   "port": 22}]
 
-myIP = get_shell.host_computer.local_ip
-if myIP != exploitServerIP then
-    print("\n--- Setting up bounce chain ---")
-    currentShell = get_shell
-
-    for bounce in bounceServers
-        print("Bouncing via " + bounce.ip + "...")
-        nextShell = currentShell.connect_service(bounce.ip, bounce.port, bounce.user, bounce.pass, "ssh")
-        if not nextShell then
-            exit("<b>Bounce failed at " + bounce.ip + ". Check server is up.</b>")
-        end if
-        print("  OK -> " + bounce.ip)
-        currentShell = nextShell
-    end for
-
-    print("Landing on exploit server " + exploitServerIP + "...")
-    exploitShell = currentShell.connect_service(exploitServerIP, exploitServerPort, exploitServerUser, exploitServerPass, "ssh")
-    if not exploitShell then
-        exit("<b>Could not reach exploit server " + exploitServerIP + ". Check it is up.</b>")
+print("\n--- Safety bounce ---")
+currentShell = shell
+bounceOk = true
+for bounce in bounceServers
+    print("Hopping via " + bounce.ip + "...")
+    nextShell = currentShell.connect_service(bounce.ip, bounce.port, bounce.user, bounce.pass, "ssh")
+    if not nextShell then
+        print("<b>Hop failed at " + bounce.ip + " - continuing without full bounce</b>")
+        bounceOk = false
+        break
     end if
-    print("<b>On exploit server! Relaunching mapkit for target: " + params[0] + "</b>")
-    exploitShell.launch("/usr/bin/Terminal.exe", "/bin/mapkit " + params[0])
-    print("Mapkit launched on exploit server.")
-    exploitShell.start_terminal
-    exit("")
-end if
+    print("  OK -> " + bounce.ip)
+    currentShell = nextShell
+end for
 
-print("Already on exploit server - scanning direct.")
+if bounceOk then
+    print("Safety bounce complete.")
+else
+    print("Partial bounce - continuing anyway.")
+end if
 
 // ================================================================
 // --- MAIN MAPKIT ---
 // ================================================================
 
 metax = include_lib("/lib/metaxploit.so")
-if not metax then exit ("<b>Error: Unable to find 'metaxploit.so'. Put missing library in the '/lib' folder</b>")
+if not metax then exit ("<b>Error: Unable to find 'metaxploit.so'.</b>")
 
 cryptools = include_lib("/lib/crypto.so")
 
-shell = get_shell
-computer = shell.host_computer
 password = "password"
 
 if not is_valid_ip(params[0]) then exit ("<b>Error: Invalid IP address.</b>")
@@ -90,7 +82,6 @@ end if
 if ports == null then exit ("<b>mapkit: ip address not found</b>")
 if typeof(ports) == "string" then exit(ports)
 
-// --- Folder setup ---
 targetsFolderName = "targets"
 targetsFolderPath = "/"
 targetsFolder = "/" + targetsFolderName
@@ -101,126 +92,11 @@ if computer.File(targetsFolder) == null then
     computer.create_folder(targetsFolderPath, targetsFolderName)
 end if
 
-// --- Global: Track discovered services on target ---
 discoveredServices = []
 
 // ================================================================
 // --- HELPERS ---
 // ================================================================
-
-get_router_exploits = function(routerIP, targetsFolder, targetVersion)
-    exploits = []
-    libFolderName = "kernel_router.so_v" + targetVersion
-    libDir = computer.File(targetsFolder + "/" + libFolderName)
-    if libDir == null then
-        print("  No kernel_router.so_v" + targetVersion + " folder found.")
-        return exploits
-    end if
-    if not libDir.is_folder then return exploits
-    for f in libDir.get_files
-        content = f.get_content
-        if content == null then continue
-        isComputer = false
-        isFile = false
-        port = ""
-        zone = ""
-        exploit = ""
-        for line in content.split(char(10))
-            if line.indexOf("Result: Computer") == 0 then isComputer = true
-            if line.indexOf("Result: File") == 0 then isFile = true
-            if line.indexOf("Port: ") == 0 then port = line[6:]
-            if line.indexOf("Zone: ") == 0 then zone = line[6:]
-            if line.indexOf("Exploit: ") == 0 then exploit = line[9:]
-        end for
-        if (isComputer or isFile) and zone != "" and exploit != "" then
-            expType = "File"
-            if isComputer then expType = "Computer"
-            exploits.push({"zone": zone, "exploit": exploit, "port": port, "type": expType})
-        end if
-    end for
-    return exploits
-end function
-
-get_service_exploits = function(targetsFolder, targetLibName, targetVersion)
-    serviceExploits = []
-    libFolderName = targetLibName + "_v" + targetVersion
-    libDir = computer.File(targetsFolder + "/" + libFolderName)
-    if libDir == null then
-        altFolderName = targetLibName + "_" + targetVersion
-        libDir = computer.File(targetsFolder + "/" + altFolderName)
-    end if
-    if libDir == null then
-        print("  No " + libFolderName + " folder found.")
-        return serviceExploits
-    end if
-    if not libDir.is_folder then return serviceExploits
-    for f in libDir.get_files
-        content = f.get_content
-        if content == null then continue
-        isComputer = false
-        isFile = false
-        port = ""
-        zone = ""
-        exploit = ""
-        for line in content.split(char(10))
-            if line.indexOf("Result: Computer") == 0 then isComputer = true
-            if line.indexOf("Result: File") == 0 then isFile = true
-            if line.indexOf("Port: ") == 0 then port = line[6:]
-            if line.indexOf("Zone: ") == 0 then zone = line[6:]
-            if line.indexOf("Exploit: ") == 0 then exploit = line[9:]
-        end for
-        if (isComputer or isFile) and zone != "" and exploit != "" and port != "" and port != "0" then
-            expType = "File"
-            if isComputer then expType = "Computer"
-            serviceExploits.push({"zone": zone, "exploit": exploit, "port": port.to_int, "lib": targetLibName, "type": expType})
-        end if
-    end for
-    return serviceExploits
-end function
-
-try_exploits_for_computer = function(routerLib, lanIP, exploits)
-    for exp in exploits
-        print("  Trying exploit: " + exp.zone + " / " + exp.exploit + " (hoping for Computer)")
-        result = routerLib.overflow(exp.zone, exp.exploit, lanIP)
-        if result != null and typeof(result) == "computer" then
-            print("  Got Computer access on " + lanIP + " using " + exp.exploit)
-            return result
-        end if
-    end for
-    return null
-end function
-
-try_exploits_for_file = function(routerLib, lanIP, exploits)
-    for exp in exploits
-        print("  Trying exploit: " + exp.zone + " / " + exp.exploit + " (hoping for File)")
-        result = routerLib.overflow(exp.zone, exp.exploit, lanIP)
-        if result != null and typeof(result) == "file" then
-            print("  Got File access on " + lanIP + " using " + exp.exploit)
-            return result
-        end if
-    end for
-    return null
-end function
-
-try_service_exploits = function(lanIP, serviceExploits)
-    for exp in serviceExploits
-        print("    Trying service exploit: " + exp.lib + " port " + exp.port + " " + exp.zone + "/" + exp.exploit)
-        net_session = metax.net_use(lanIP, exp.port)
-        if net_session == null then
-            print("    Could not connect to port " + exp.port + " on " + lanIP)
-            continue
-        end if
-        metaLib = net_session.dump_lib
-        result = metaLib.overflow(exp.zone, exp.exploit, password)
-        if result != null then
-            if typeof(result) == "computer" or typeof(result) == "file" then
-                print("    Got " + typeof(result) + " access via " + exp.lib)
-                return result
-            end if
-        end if
-    end for
-    return null
-end function
 
 getPrivilegeOfShell = function(shellObj)
     print("")
@@ -230,6 +106,7 @@ getPrivilegeOfShell = function(shellObj)
     print("  2) guest")
     print("  3) user")
     print("  4) custom (enter username)")
+
     validChoice = false
     while not validChoice
         choice = user_input("  Choice (1-4 or custom username): ").trim.lower
@@ -255,7 +132,7 @@ output = ""
 info = "PORT STATE SERVICE VERSION LAN"
 openPorts = []
 
-print("\nStarting mapkit v3.1 at " + current_date)
+print("\nStarting mapkit v3.2 at " + current_date)
 print("Interesting ports on " + ipAddress + "\n")
 
 for port in ports
@@ -337,7 +214,6 @@ if routerVersion then
                         status = "Undefined / Conditional"
                     else if typeof(result) == "shell" then
                         privilege = getPrivilegeOfShell(result)
-                        print("  Scanning: Shell exploit successful")
                         status = "Shell/" + privilege
                         shellExploits.push(exploit)
                     else if typeof(result) == "firewall" then
@@ -421,16 +297,16 @@ else
         libName = metaLib.lib_name
         libVersion = metaLib.version
 
-        if libName.indexOf("ssh") != null and ssh_scanned then
-            continue
-        else if libName.indexOf("ftp") != null and ftp_scanned then
-            continue
-        else if libName.indexOf("http") != null and http_scanned then
-            continue
-        else if libName.indexOf("sql") != null and sql_scanned then
-            continue
-        else if libName.indexOf("smtp") != null and smtp_scanned then
-            continue
+        if libName.indexOf("ssh") != null and ssh_scanned then 
+			continue
+        else if libName.indexOf("ftp") != null and ftp_scanned then 
+			continue
+        else if libName.indexOf("http") != null and http_scanned then 
+			continue
+        else if libName.indexOf("sql") != null and sql_scanned then 
+			continue
+        else if libName.indexOf("smtp") != null and smtp_scanned then 
+			continue
         end if
 
         discoveredServices.push({"name": libName, "version": libVersion, "port": port.port_number})
@@ -443,7 +319,6 @@ else
         end if
 
         computer.create_folder(targetsFolder, libFolderName)
-
         print("\nScanning " + libName + " v" + libVersion + " on port " + port.port_number)
         output = output + char(10) + char(10) + libName + " v" + libVersion + " on port " + port.port_number
 
@@ -469,7 +344,6 @@ else
                     status = "Undefined / Conditional"
                 else if typeof(result) == "shell" then
                     privilege = getPrivilegeOfShell(result)
-                    print("  Scanning: Shell exploit successful")
                     status = "Shell/" + privilege
                     shellExploits.push(exploit)
                 else if typeof(result) == "file" then
@@ -521,7 +395,6 @@ else
                 else
                     print("<b>Warning: Could not write vuln file: " + safeName + "</b>")
                 end if
-
                 wait(0.5)
             end for
 
@@ -582,7 +455,7 @@ else
     print(format_columns(openInfo))
 end if
 
-print("\n--- Shell Exploits Found (filtered to target's services) ---")
+print("\n--- Shell Exploits Found ---")
 shellCount = 0
 targetFolderObj = computer.File(targetsFolder)
 
@@ -628,7 +501,7 @@ if targetFolderObj != null and targetFolderObj.is_folder then
 end if
 
 if shellCount == 0 then
-    print("  No shell exploits found for target's services.")
+    print("  No shell exploits found.")
 else
     print("  Total shell exploits: " + shellCount)
 end if
@@ -647,12 +520,8 @@ if targetsFolderObj == null then
     computer.create_folder("/", "targets")
     targetsFolderObj = computer.File(targetsFolder)
 end if
-if targetsFolderObj == null then
-    exit("<b>Error: Could not create /targets folder.</b>")
-end if
-if not targetsFolderObj.is_folder then
-    exit("<b>Error: /targets exists but is not a folder.</b>")
-end if
+if targetsFolderObj == null then exit("<b>Error: Could not create /targets folder.</b>")
+if not targetsFolderObj.is_folder then exit("<b>Error: /targets is not a folder.</b>")
 
 targetLibNames = []
 if discoveredServices != null and discoveredServices.len > 0 then
@@ -695,9 +564,7 @@ if libFolders.len == 0 then
             libFolderNames.push(f.name)
         end if
     end for
-    if libFolders.len == 0 then
-        exit("<b>No exploit folders found in /targets/</b>")
-    end if
+    if libFolders.len == 0 then exit("<b>No exploit folders found in /targets/</b>")
 end if
 
 while true
@@ -718,7 +585,7 @@ while true
         sshPass = user_input("SSH password: ")
         sshPort = user_input("SSH port (blank = 22): ")
         if sshPort == "" then sshPort = "22"
-        print("\nConnecting via SSH to " + ipAddress + ":" + sshPort + " as " + sshUser + "...")
+        print("\nConnecting via SSH to " + ipAddress + ":" + sshPort + "...")
         tgt_shell = shell.connect_service(ipAddress, val(sshPort), sshUser, sshPass, "ssh")
         if not tgt_shell then
             print("<b>SSH login failed.</b>")
@@ -727,6 +594,12 @@ while true
         print("<b>SSH login successful!</b>")
         wait(0.5)
         tgt_comp = tgt_shell.host_computer
+        log_file = tgt_comp.File("/var/system.log")
+        if log_file != null and log_file.has_permission("w") then
+            log_file.delete
+            tgt_comp.touch("/var", "system.log")
+            print("Logs pre-cleared!")
+        end if
         tgt_shell.start_terminal
         print("\nCleaning up...")
         ssh_session = metax.net_use(ipAddress, val(sshPort))
@@ -738,7 +611,6 @@ while true
                 wait(0.2)
                 print("Target logs cleared!")
                 tgt_shell.launch("/usr/bin/LogViewer.exe")
-                print("LogViewer opened on target!")
                 wait(3)
             else
                 print("Could not clear logs.")
@@ -868,6 +740,13 @@ while true
             wait(0.5)
             tgt_shell = result
             tgt_comp = tgt_shell.host_computer
+            log_file = tgt_comp.File("/var/system.log")
+            if log_file != null and log_file.has_permission("w") then
+                log_file.delete
+                tgt_comp.touch("/var", "system.log")
+                print("Logs pre-cleared!")
+            end if
+            print("<b>Do your thing. Type exit when done.</b>")
             tgt_shell.start_terminal
             print("\nCleaning up...")
             if net_session.is_root_active_user then
