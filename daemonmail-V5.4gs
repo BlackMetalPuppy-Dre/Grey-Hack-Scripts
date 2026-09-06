@@ -1,6 +1,6 @@
-// mail_automation_daemon v5.3 ONLY WORKS WITH MAPKIT!
+// mail_automation_daemon v5.4 launch on home drops the IP's from your mail in your exploit server as queue.txt and mapwatcher opens mapkit (ONLY WORKS WITH MAPKIT AND MAPWATCHER!)
 print("=" * 60)
-print("Mail Automation Daemon v5.3")
+print("Mail Automation Daemon v5.4")
 print("=" * 60)
 
 // ==================== CONFIGURATION ====================
@@ -10,6 +10,18 @@ queue_file = log_dir + "/scan_queue.txt"
 completed_file = log_dir + "/completed_scans.txt"
 pid_file = log_dir + "/daemon.pid"
 
+// Exploit server config
+exploitServerIP   = "YOUR-EXPLOIT-SERVER-IP-HERE"
+exploitServerUser = "root"
+exploitServerPass = "YOUR-EXPLOIT-SERVER-PASS-HERE"
+exploitServerPort = 22
+exploitQueueFile  = "/targets/queue.txt"
+
+bounceServers = [
+    {"ip": "YOUR-BOUNCE-SERVER-IP-HERE",  "user": "root", "pass": "YOUR-PASS-HERE", "port": 22},
+    {"ip": "YOUR-BOUNCE-SERVER-IP-HERE",  "user": "root", "pass": "YOUR-PASS-HERE",  "port": 22},
+    {"ip": "YOUR-BOUNCE-SERVER-IP-HERE",  "user": "root", "pass": "YOUR-PASS-HERE",    "port": 22}]
+
 blacklist_keywords = []
 blacklist_keywords.push("The customer is satisfied with the job")
 blacklist_keywords.push("There has been an income in your account")
@@ -17,8 +29,8 @@ blacklist_keywords.push("I" + char(39) + "ve been watching you for a while.")
 blacklist_keywords.push("I think we can do business together.")
 blacklist_keywords.push("Visit my website at")
 
-email_address = "YOUR_MAIL_HERE"
-email_password = "YOUR_MAIL_PASS_HERE"
+email_address = "YOUR-MAIL-HERE"
+email_password = "YOUR-PASS-HERE"
 
 shell = get_shell
 computer = shell.host_computer
@@ -52,18 +64,13 @@ end function
 // ==================== PID HELPERS ====================
 collect_pids = function(command)
     pids = []
-    if computer.show_procs == null then
-        log_message("WARN", "show_procs not available")
-        return pids
-    end if
+    if computer.show_procs == null then return pids
     datarow = computer.show_procs.split(char(10))
     for r in datarow
         c = r.split(" ")
         if c.len > 4 and c[4] == command then
             pid = val(c[1])
-            if pid != null then
-                pids.push(pid)
-            end if
+            if pid != null then pids.push(pid)
         end if
     end for
     return pids
@@ -71,9 +78,7 @@ end function
 
 get_current_pid = function()
     pids = collect_pids("Terminal")
-    if pids.len > 0 then
-        return pids[pids.len - 1]
-    end if
+    if pids.len > 0 then return pids[pids.len - 1]
     return null
 end function
 
@@ -93,24 +98,17 @@ end function
 
 attempt_kill_pid = function(pid)
     if pid == null then return false
-    log_message("INFO", "Attempting to kill previous PID: " + pid)
+    log_message("INFO", "Attempting to kill PID: " + pid)
     pidInt = pid
-    if typeof(pid) == "string" then
-        pidInt = pid.to_int
-    end if
-    if pidInt == null then
-        log_message("WARN", "Invalid PID format: " + pid)
-        return false
-    end if
-    hostComp = shell.host_computer
-    closeResult = hostComp.close_program(pidInt)
+    if typeof(pid) == "string" then pidInt = pid.to_int
+    if pidInt == null then return false
+    closeResult = computer.close_program(pidInt)
     if typeof(closeResult) == "string" then
-        log_message("WARN", "Error closing PID " + pid + ": " + closeResult)
+        log_message("WARN", "Could not kill PID " + pid + ": " + closeResult)
         return false
-    else
-        log_message("INFO", "Successfully closed PID: " + pid)
-        return true
     end if
+    log_message("INFO", "Killed PID: " + pid)
+    return true
 end function
 
 // ==================== LIST PERSISTENCE ====================
@@ -124,9 +122,7 @@ save_list = function(filePath, list)
         computer.touch(folderPath, fileName)
         file = computer.File(filePath)
     end if
-    if file != null then
-        file.set_content(content)
-    end if
+    if file != null then file.set_content(content)
 end function
 
 load_list = function(filePath)
@@ -138,9 +134,7 @@ load_list = function(filePath)
     lines = content.split("\n")
     for line in lines
         line = line.trim
-        if line != "" then
-            list.push(line)
-        end if
+        if line != "" then list.push(line)
     end for
     return list
 end function
@@ -179,9 +173,7 @@ extract_ips = function(text)
         end while
         if word == "" then continue
         if is_valid_ip_str(word) then
-            if ips.indexOf(word) == null then
-                ips.push(word)
-            end if
+            if ips.indexOf(word) == null then ips.push(word)
         end if
     end for
     return ips
@@ -191,9 +183,7 @@ end function
 is_blacklisted = function(content)
     if typeof(content) != "string" then return false
     for keyword in blacklist_keywords
-        if content.indexOf(keyword) != null then
-            return true
-        end if
+        if content.indexOf(keyword) != null then return true
     end for
     return false
 end function
@@ -204,27 +194,17 @@ try_harvest = function(target_ip, targetsFolder)
         log_message("WARN", "Harvest: metaxploit not available")
         return
     end if
-
     tgtFolderObj = computer.File(targetsFolder)
-    if tgtFolderObj == null then
-        log_message("WARN", "Harvest: /targets folder not found")
-        return
-    end if
-
+    if tgtFolderObj == null then return
     allFileExploits = []
-
     for libDir in tgtFolderObj.get_folders
-        log_message("DEBUG", "Harvest: scanning folder " + libDir.name)
-
         for f in libDir.get_files
             content = f.get_content
             if content == null then continue
-
             isFile = false
             fZone = ""
             fExploit = ""
             fPort = ""
-
             for line in content.split(char(10))
                 line = line.trim
                 if line.indexOf("Result: File") == 0 then isFile = true
@@ -232,23 +212,17 @@ try_harvest = function(target_ip, targetsFolder)
                 if line.indexOf("Exploit: ") == 0 then fExploit = line[9:].trim
                 if line.indexOf("Port: ") == 0 then fPort = line[6:].trim
             end for
-
             if isFile and fZone != "" and fExploit != "" and fPort != "" then
-                log_message("DEBUG", "Harvest: found File exploit " + fExploit + " port " + fPort + " in " + libDir.name)
                 allFileExploits.push(fZone + "|" + fExploit + "|" + fPort + "|" + libDir.name)
             end if
         end for
     end for
-
     if allFileExploits.len == 0 then
-        log_message("WARN", "Harvest: no File exploits found in any lib folder")
+        log_message("WARN", "Harvest: no File exploits found")
         return
     end if
-
-    log_message("INFO", "Harvest: found " + allFileExploits.len + " File exploits across all libs")
-
+    log_message("INFO", "Harvest: found " + allFileExploits.len + " File exploits")
     homeFolder = null
-
     for entry in allFileExploits
         if homeFolder != null then break
         parts = entry.split("|")
@@ -256,49 +230,19 @@ try_harvest = function(target_ip, targetsFolder)
         fExploit = parts[1]
         fPort = parts[2]
         fLib = parts[3]
-
         portNum = val(fPort)
         if portNum == null then portNum = 0
-
-        log_message("DEBUG", "Harvest: trying " + fLib + " port " + fPort + " zone " + fZone + " exploit " + fExploit)
-
         net_session = metax.net_use(target_ip, portNum)
-        if net_session == null then
-            log_message("DEBUG", "Harvest: could not connect to port " + fPort)
-            continue
-        end if
-
-        if not net_session.is_root_active_user then
-            log_message("DEBUG", "Harvest: not root on port " + fPort)
-            continue
-        end if
-
+        if net_session == null then continue
+        if not net_session.is_root_active_user then continue
         metaLib = net_session.dump_lib
         result = metaLib.overflow(fZone, fExploit)
-
-        if result == null then
-            log_message("DEBUG", "Harvest: overflow returned null for " + fExploit)
-            continue
-        end if
-
-        if typeof(result) != "file" then
-            log_message("DEBUG", "Harvest: got " + typeof(result) + " not file from " + fExploit)
-            continue
-        end if
-
-        if not result.is_folder then
-            log_message("DEBUG", "Harvest: result is a file not a folder")
-            continue
-        end if
-
-        if not result.has_permission("r") then
-            log_message("DEBUG", "Harvest: no read permission")
-            continue
-        end if
-
+        if typeof(result) != "file" then continue
+        if not result.is_folder then continue
+        if not result.has_permission("r") then continue
         if result.path == "/home" then
             homeFolder = result
-            log_message("INFO", "Harvest: got /home directly via " + fLib + " port " + fPort)
+            log_message("INFO", "Harvest: got /home via " + fLib + " port " + fPort)
         else
             current = result
             while current.path != "/"
@@ -307,33 +251,28 @@ try_harvest = function(target_ip, targetsFolder)
             for folder in current.get_folders
                 if folder.path == "/home" then
                     homeFolder = folder
-                    log_message("INFO", "Harvest: got /home via root walk from " + fLib + " port " + fPort)
+                    log_message("INFO", "Harvest: got /home via root walk from " + fLib)
                     break
                 end if
             end for
         end if
     end for
-
     if homeFolder == null then
         log_message("WARN", "Harvest: could not access /home on " + target_ip)
         return
     end if
-
     for userFolder in homeFolder.get_folders
         if userFolder.name.lower == "guest" then continue
-        log_message("DEBUG", "Harvest: checking user " + userFolder.name)
-
         for subFolder in userFolder.get_folders
             if subFolder.name != "Config" then continue
-
             for f in subFolder.get_files
                 if f.name == "Mail.txt" then
                     if not f.has_permission("r") then continue
                     content = f.get_content
                     log_message("INFO", "Harvest MAIL " + target_ip + " user:" + userFolder.name)
                     fileName = target_ip.replace(".", "_") + "_" + userFolder.name + "_mail.txt"
-                    computer.touch(targets_dir, fileName)
-                    harvestFolder = computer.File(targets_dir)
+                    computer.touch(targetsFolder, fileName)
+                    harvestFolder = computer.File(targetsFolder)
                     harvestFile = null
                     for hf in harvestFolder.get_files
                         if hf.name == fileName then
@@ -346,7 +285,6 @@ try_harvest = function(target_ip, targetsFolder)
                         log_message("INFO", "Harvest: saved " + fileName)
                     end if
                 end if
-
                 if f.name == "Bank.txt" then
                     if not f.has_permission("r") then continue
                     userPass = f.get_content.split(":")
@@ -360,8 +298,8 @@ try_harvest = function(target_ip, targetsFolder)
                         log_message("INFO", "Harvest BANK " + target_ip + " user:" + userFolder.name + " account:" + userPass[0] + " (undeciphered)")
                     end if
                     fileName = target_ip.replace(".", "_") + "_" + userFolder.name + "_bank.txt"
-                    computer.touch(targets_dir, fileName)
-                    harvestFolder = computer.File(targets_dir)
+                    computer.touch(targetsFolder, fileName)
+                    harvestFolder = computer.File(targetsFolder)
                     harvestFile = null
                     for hf in harvestFolder.get_files
                         if hf.name == fileName then
@@ -381,7 +319,6 @@ try_harvest = function(target_ip, targetsFolder)
             end for
         end for
     end for
-
     log_message("INFO", "Harvest complete for " + target_ip)
 end function
 
@@ -416,32 +353,18 @@ process_emails = function()
                 break
             end if
         end for
-        if mailID == "" then
-            log_message("WARN", "Could not find MailID")
-            continue
-        end if
-        log_message("DEBUG", "Reading MailID: " + mailID)
+        if mailID == "" then continue
         fullContent = mail_account.read(mailID)
-        if fullContent == null then
-            log_message("WARN", "Could not read full email")
-            continue
-        end if
+        if fullContent == null then continue
         if typeof(fullContent) != "string" then continue
-        if fullContent.indexOf("Mission Contract") == null then
-            log_message("DEBUG", "No 'Mission Contract' in email, ignoring")
-            continue
-        end if
+        if fullContent.indexOf("Mission Contract") == null then continue
         if is_blacklisted(fullContent) then
             log_message("INFO", "Blacklisted email skipped")
             continue
         end if
-        log_message("INFO", "Pending job found: " + mailID)
         ips = extract_ips(fullContent)
         for ip in ips
-            if is_lan_ip(ip) then
-                log_message("DEBUG", "Skipping LAN IP: " + ip)
-                continue
-            end if
+            if is_lan_ip(ip) then continue
             if completed_scans.indexOf(ip) == null and scan_queue.indexOf(ip) == null then
                 scan_queue.push(ip)
                 new_targets.push(ip)
@@ -456,21 +379,68 @@ process_emails = function()
     return new_targets
 end function
 
-// ==================== RUN MAPKIT ====================
+// ==================== CONNECT TO EXPLOIT SERVER ====================
+get_exploit_shell = function()
+    currentShell = shell
+    for bounce in bounceServers
+        nextShell = currentShell.connect_service(bounce.ip, bounce.port, bounce.user, bounce.pass, "ssh")
+        if not nextShell then
+            log_message("ERROR", "Bounce failed at " + bounce.ip)
+            return null
+        end if
+        currentShell = nextShell
+    end for
+    exploitShell = currentShell.connect_service(exploitServerIP, exploitServerPort, exploitServerUser, exploitServerPass, "ssh")
+    if not exploitShell then
+        log_message("ERROR", "Could not reach exploit server")
+        return null
+    end if
+    return exploitShell
+end function
+
+// ==================== RUN MAPKIT VIA EXPLOIT SERVER QUEUE ====================
 run_mapkit = function(target_ip)
-    if computer.File("/bin/mapkit") == null then
-        log_message("ERROR", "mapkit not found at /bin/mapkit")
+    log_message("INFO", "Dropping job to exploit server queue: " + target_ip)
+
+    exploitShell = get_exploit_shell()
+    if exploitShell == null then
+        log_message("ERROR", "Could not connect to exploit server")
         return false
     end if
-    wait(2)
-    log_message("INFO", "Launching mapkit for: " + target_ip)
-    shell.launch("/usr/bin/Terminal.exe", "/bin/mapkit " + target_ip)
-    wait(180)
-    if computer.File(targets_dir + "/" + target_ip + ".txt") != null then
-        log_message("INFO", "Mapkit completed for " + target_ip)
-        return true
+
+    // Write IP to queue file on exploit server
+    exploitComp = exploitShell.host_computer
+    qFile = exploitComp.File(exploitQueueFile)
+    if qFile == null then
+        exploitComp.touch("/targets", "queue.txt")
+        qFile = exploitComp.File(exploitQueueFile)
     end if
-    log_message("WARN", "No results found for " + target_ip)
+    if qFile == null then
+        log_message("ERROR", "Could not create queue file on exploit server")
+        return false
+    end if
+    existing = qFile.get_content
+    if existing == null then existing = ""
+    if existing.trim != "" then
+        qFile.set_content(existing.trim + "\n" + target_ip)
+    else
+        qFile.set_content(target_ip)
+    end if
+    log_message("INFO", "Job queued on exploit server: " + target_ip)
+
+    // Wait for result file to appear on exploit server
+    waited = 0
+    maxWait = 360
+    while waited < maxWait
+        wait(10)
+        waited = waited + 10
+        if exploitComp.File("/targets/" + target_ip + ".txt") != null then
+            log_message("INFO", "Mapkit results ready for: " + target_ip)
+            return true
+        end if
+    end while
+
+    log_message("WARN", "Timeout waiting for mapkit results: " + target_ip)
     return false
 end function
 
@@ -523,8 +493,7 @@ while i < params.len
     i = i + 1
 end while
 
-// ==================== PID MANAGEMENT (FIXED ORDER) ====================
-// --- STEP 1: Read old PID BEFORE saving our own ---
+// ==================== PID MANAGEMENT ====================
 if parsed_old_pid != null then
     old_pid = parsed_old_pid
 else
@@ -537,17 +506,14 @@ else
     end if
 end if
 
-// --- STEP 2: Get our own PID ---
 mypid = get_current_pid()
 
-// --- STEP 3: Kill old PID if different from ours ---
 if old_pid != null and mypid != null and old_pid != mypid then
     attempt_kill_pid(old_pid)
 else if old_pid != null and mypid == null then
     attempt_kill_pid(old_pid)
 end if
 
-// --- STEP 4: NOW save our PID after killing old one ---
 if mypid != null then
     saved = save_my_pid(mypid)
     if saved then log_message("INFO", "Saved current PID: " + mypid)
@@ -572,7 +538,6 @@ end if
 
 if run_once then
     log_message("INFO", "One-shot mode: exiting.")
-    print("Done. Exiting.")
     exit("")
 end if
 
@@ -589,17 +554,14 @@ while true
     if scan_queue.len > 0 then
         execute_scan_queue()
     else
-        wait(10)
     end if
     if auto_mode and scan_queue.len == 0 then
-        log_message("INFO", "Auto mode: queue empty. Waiting 10 seconds before relaunch...")
-        wait(10)
-        log_message("INFO", "Launching new terminal with --auto and exiting.")
+        log_message("INFO", "Auto mode: queue empty. Relaunching...")
+        wait(20)
         relaunch_cmd = "/bin/daemonmail --auto"
         if mypid != null then relaunch_cmd = relaunch_cmd + " --old-pid " + mypid
         shell.launch("/usr/bin/Terminal.exe", relaunch_cmd)
         log_message("INFO", "New terminal launched. Exiting.")
-        print("Auto mode: relaunching. Exiting.")
         exit("")
     end if
 end while
