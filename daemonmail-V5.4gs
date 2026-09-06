@@ -1,4 +1,4 @@
-// mail_automation_daemon v5.4 launch on home drops the IP's from your mail in your exploit server as queue.txt and mapwatcher opens mapkit (ONLY WORKS WITH MAPKIT AND MAPWATCHER!)
+// mail_automation_daemon v5.4 launch on home drops the IP's from your mail in your exploit server as queue.txt and mapwatcher opens mapkit (ONLY WORKS WITH MAPKIT AND MAPWATCHER!) RUN WITH daemonmail --auto
 print("=" * 60)
 print("Mail Automation Daemon v5.4")
 print("=" * 60)
