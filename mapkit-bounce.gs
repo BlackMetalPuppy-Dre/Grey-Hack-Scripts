@@ -20,7 +20,7 @@ bounceServers = [
     {"ip": "Your-IP-here",  "user": "root", "pass": "Your-PASS-here", "port": 22},
     {"ip": "Your-IP-here",  "user": "root", "pass": "Your-PASS-here",  "port": 22},
     {"ip": "Your-IP-here",  "user": "root", "pass": "Your-PASS-here",    "port": 22}]
-
+//you can add more bounce servers of cource and change ports if needed
 exploitServerIP   = "Your-ExploitServerIP-here"
 exploitServerUser = "root"
 exploitServerPass = "Your-PASS-here"
