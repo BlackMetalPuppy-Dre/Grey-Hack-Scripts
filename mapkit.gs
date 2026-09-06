@@ -1,6 +1,5 @@
 // Command mapkit [Target IP] Privilege-Aware
-// Works great with daemonmail
-// Can be used as standalone
+// Used as standalone BEST TO USE mapkit-bounce with mapwatcher+daemonmail (this one is more for the begin) 
 // mapkit 3.0
 print("Booting Mapkit V3.0...")
 wait(0.2)
