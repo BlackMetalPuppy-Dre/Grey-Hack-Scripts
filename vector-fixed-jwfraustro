@@ -1,7 +1,7 @@
 // Credits to https://github.com/jwfraustro/Vector-Greyhackgame/blob/main/Vector.src could not be compiled FIXED (this one can be compiled in grey hack)
 // AND WAY MORE PASSWORDS AND CHANCE TO CRACK
 // VECTOR Password Brute Force – Markov with Case Variations from files use the vecpass.txt from here and use the vecpassgen for more success! that makes 6 password files!
-// LOCAL USE ONLY!! When guest priveleges forced by admin you use this! drop in guest folder with files and fire it off! MAY TAKE A MINUTE TO CRACK! 
+// LOCAL USE ONLY!! When guest privileges forced by admin or you have only shell exploits the have guest privileges you use this! drop in guest folder with vecpass folder and fire it off! MAY TAKE A MINUTE TO CRACK! 
 // ==================== CONFIGURATION ====================
 LOCAL_USER = "root"
 MAX_LENGTH = 10
